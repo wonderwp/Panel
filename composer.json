@@ -1,7 +1,7 @@
 {
-    "name": "wonderwp/filter",
+    "name": "wonderwp/panel",
     "type": "library",
-    "description": "WonderWp Filter Component",
+    "description": "WonderWp Panel Component",
     "keywords": [],
     "homepage": "https://wonderwp.com",
     "license": "MIT",
@@ -24,7 +24,7 @@
         "johnpbloch/wordpress": "^4.7"
     },
     "autoload": {
-        "psr-4": {"WonderWp\\Component\\Search\\": "src"},
+        "psr-4": {"WonderWp\\Component\\Panel\\": "src"},
         "exclude-from-classmap": [
             "/tests/"
         ]
