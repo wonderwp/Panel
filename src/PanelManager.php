@@ -77,7 +77,7 @@ class PanelManager
                 }
 
                 /** @var Form $form */
-                $form = $container->offsetGet('wwp.forms.form');
+                $form = $container->offsetGet('wwp.form.form');
                 foreach ($fields as $f) {
                     /** @var AbstractField $f */
                     $fname = $f->getName();
