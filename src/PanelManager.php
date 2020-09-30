@@ -33,7 +33,9 @@ class PanelManager
 
         if (!empty($postTypes)) {
             foreach ($postTypes as $key => $postType) {
-                add_meta_box($panel->getId() . '_custombox', $panel->getTitle(), [&$this, 'displayPanel'], $postType);
+                if (function_exists('add_meta_box')) {
+                    add_meta_box($panel->getId() . '_custombox', $panel->getTitle(), [&$this, 'displayPanel'], $postType);
+                }
             }
         }
 
@@ -55,10 +57,12 @@ class PanelManager
 
     /**
      * Affiche le contenu du panneau dans le panneau
-     * @since 08/07/2011
      *
      * @param \WP_Post $post    , le post en cours
      * @param array    $context , toutes les données utiles
+     *
+     * @since 08/07/2011
+     *
      */
     public function displayPanel(\WP_Post $post, $context)
     {
@@ -109,8 +113,8 @@ class PanelManager
 
     /**
      * Sauvegarde les informations du panneau
-     * @since 08/07/2011
      * @return int $post_id
+     * @since 08/07/2011
      */
     public function savePanels()
     {
@@ -134,6 +138,11 @@ class PanelManager
             foreach ($panelList as $panel) {
                 /** @var PanelInterface $panel */
 
+                $panelPostTypes = $panel->getPostTypes();
+                if (!in_array($postType, $panelPostTypes)) {
+                    continue;
+                }
+
                 $metakey = $panel->getId();
                 $metaval = [];
 
@@ -153,7 +162,9 @@ class PanelManager
                                 if (is_array($val) || is_object($val)) {
                                     $val = serialize($val);
                                 }
-                                if(is_string($val)){ $val = stripslashes($val); }//Because request adds a / 
+                                if (is_string($val)) {
+                                    $val = stripslashes($val);
+                                }//Because request adds a /
                                 $metaval[$key] = $val;
                                 //On MaJ la valeur individuelle, utile pour faire des query avec get_posts en utilisant les champs meta_key et meta_value.
                                 //La cle etant faite de $metakey.$key
