@@ -33,7 +33,9 @@ class PanelManager
 
         if (!empty($postTypes)) {
             foreach ($postTypes as $key => $postType) {
-                add_meta_box($panel->getId() . '_custombox', $panel->getTitle(), [&$this, 'displayPanel'], $postType);
+                if (function_exists('add_meta_box')) {
+                    add_meta_box($panel->getId() . '_custombox', $panel->getTitle(), [&$this, 'displayPanel'], $postType);
+                }
             }
         }
 
