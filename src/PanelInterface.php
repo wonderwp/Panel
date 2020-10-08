@@ -36,11 +36,11 @@ interface PanelInterface
     public function getFields();
 
     /**
-     * @param mixed $fields
+     * @param FieldInterface[] $fields
      *
      * @return static
      */
-    public function setFields($fields);
+    public function setFields(array $fields);
 
     /**
      * @return array
@@ -54,4 +54,17 @@ interface PanelInterface
      */
     public function setPostTypes(array $postTypes);
 
+    /**
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function formatToDb($value);
+
+    /**
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function formatFromDb($value);
 }

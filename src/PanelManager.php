@@ -75,10 +75,7 @@ class PanelManager
             $fields = $panel->getFields();
             if (!empty($fields)) {
                 //On recupere les parametres et leur données sauvegardées
-                $savedData = get_post_meta($post->ID, $panelid, true);
-                if (is_serialized($savedData)) {
-                    $savedData = unserialize($savedData);
-                }
+                $savedData = $panel->formatFromDb(get_post_meta($post->ID, $panelid, true));
 
                 /** @var Form $form */
                 $form = $container->offsetGet('wwp.form.form');
@@ -87,11 +84,7 @@ class PanelManager
                     $fname = $f->getName();
 
                     $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
-                    if ($value == 'on') {
-                        $value = 1;
-                    } elseif (is_serialized($value)) {
-                        $value = unserialize($value);
-                    }
+                    $panel->formatFromDb($value);
                     if ($value !== null) {
                         $f->setValue($value);
                     }
@@ -158,13 +151,8 @@ class PanelManager
                             delete_post_meta($post_id, $metakey . $key);
 
                             if (!empty($request->request->get($key))) {
-                                $val = $request->request->get($key);
-                                if (is_array($val) || is_object($val)) {
-                                    $val = serialize($val);
-                                }
-                                if (is_string($val)) {
-                                    $val = stripslashes($val);
-                                }//Because request adds a /
+                                $val = $panel->formatToDb($request->request->get($key));
+
                                 $metaval[$key] = $val;
                                 //On MaJ la valeur individuelle, utile pour faire des query avec get_posts en utilisant les champs meta_key et meta_value.
                                 //La cle etant faite de $metakey.$key
@@ -174,7 +162,7 @@ class PanelManager
                     }
                 }
                 //On met à jour la valeur d'ensemble
-                add_post_meta($post_id, $metakey, serialize($metaval));
+                add_post_meta($post_id, $metakey, $panel->formatToDb($metaval));
             }
         }
 

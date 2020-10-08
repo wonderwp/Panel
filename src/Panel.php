@@ -50,7 +50,7 @@ class Panel implements PanelInterface
     }
 
     /** @inheritdoc */
-    public function setFields($fields)
+    public function setFields(array $fields)
     {
         $this->fields = $fields;
 
@@ -70,4 +70,28 @@ class Panel implements PanelInterface
 
         return $this;
     }
+
+    public function formatToDb($value)
+    {
+        if (is_array($value) || is_object($value)) {
+            $value = serialize($value);
+        }
+        if (is_string($value)) {
+            $value = stripslashes($value);
+        }//Because request adds a /
+
+        return $value;
+    }
+
+    public function formatFromDb($value)
+    {
+        if ($value == 'on') {
+            $value = 1;
+        } elseif (is_serialized($value)) {
+            $value = unserialize($value);
+        }
+
+        return $value;
+    }
+
 }
