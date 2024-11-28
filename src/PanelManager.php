@@ -6,30 +6,31 @@ use WonderWp\Component\DependencyInjection\Container;
 use WonderWp\Component\Form\Field\AbstractField;
 use WonderWp\Component\Form\Form;
 use WonderWp\Component\HttpFoundation\Request;
+use WonderWp\Component\Panel\PostFieldPanel\PostFieldPanelInterface;
 
 class PanelManager
 {
     /**
      * The list of panels
-     * @var PanelInterface[]
+     * @var PostFieldPanelInterface[]
      */
     protected $panelList = [];
 
     /**
      * Ajout d'un panneau d'administration à la page
      *
-     * @param PanelInterface $panel
+     * @param PostFieldPanelInterface $panel
      *
      * @return $this
      */
-    public function registerPanel(PanelInterface $panel)
+    public function registerPanel(PostFieldPanelInterface $panel)
     {
         //Ajout du panneau courant dans la liste du manager
         $panelList = $this->panelList;
         $id        = $panel->getId();
 
-        /** @var PanelInterface $panel */
-        $postTypes = $panel->getPostTypes();
+        /** @var PostFieldPanelInterface $panel */
+        $postTypes = $panel->getScreens();
 
         if (!empty($postTypes)) {
             foreach ($postTypes as $key => $postType) {
@@ -48,7 +49,7 @@ class PanelManager
     /**
      * @param $panelId
      *
-     * @return PanelInterface|null
+     * @return PostFieldPanelInterface|null
      */
     public function getPanel($panelId)
     {
@@ -71,7 +72,7 @@ class PanelManager
         $panelid = str_replace('_custombox', '', $context['id']);
         $panel   = $this->getPanel($panelid);
 
-        if ($panel instanceof PanelInterface) {
+        if ($panel instanceof PostFieldPanelInterface) {
             $fields = $panel->getFields();
             if (!empty($fields)) {
                 //On recupere les parametres et leur données sauvegardées
@@ -84,6 +85,9 @@ class PanelManager
                     $fname = $f->getName();
 
                     $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
+                    if(empty($value)){
+                        $value = get_post_meta($post->ID, $fname, true);
+                    }
                     $panel->formatFromDb($value);
                     if ($value !== null) {
                         $f->setValue($value);
@@ -129,7 +133,7 @@ class PanelManager
         $panelList = $this->panelList;
         if (!empty($panelList)) {
             foreach ($panelList as $panel) {
-                /** @var PanelInterface $panel */
+                /** @var PostFieldPanelInterface $panel */
 
                 $panelPostTypes = $panel->getPostTypes();
                 if (!in_array($postType, $panelPostTypes)) {
@@ -139,30 +143,24 @@ class PanelManager
                 $metakey = $panel->getId();
                 $metaval = [];
 
-                //Suppression de l'ancienne valeur
-                delete_post_meta($post_id, $metakey);
-
                 $fields = $panel->getFields();
                 if (!empty($fields)) {
                     foreach ($fields as $f) {
                         /** @var $f AbstractField */
                         if (!empty($f->getName())) {
                             $key = $f->getName();
-                            delete_post_meta($post_id, $metakey . $key);
+                            delete_post_meta($post_id, $key);
 
                             if (!empty($request->request->get($key))) {
                                 $val = $panel->formatToDb($request->request->get($key));
 
                                 $metaval[$key] = $val;
                                 //On MaJ la valeur individuelle, utile pour faire des query avec get_posts en utilisant les champs meta_key et meta_value.
-                                //La cle etant faite de $metakey.$key
-                                add_post_meta($post_id, $metakey . $key, $val);
+                                add_post_meta($post_id, $key, $val);
                             }
                         }
                     }
                 }
-                //On met à jour la valeur d'ensemble
-                add_post_meta($post_id, $metakey, $panel->formatToDb($metaval));
             }
         }
 
