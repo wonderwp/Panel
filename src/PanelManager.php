@@ -7,6 +7,7 @@ use WonderWp\Component\Form\Field\AbstractField;
 use WonderWp\Component\Form\Form;
 use WonderWp\Component\HttpFoundation\Request;
 use WonderWp\Component\Panel\PostFieldPanel\PostFieldPanelInterface;
+use WonderWp\Component\Sanitizer\Sanitizer;
 
 class PanelManager
 {
@@ -27,7 +28,7 @@ class PanelManager
     {
         //Ajout du panneau courant dans la liste du manager
         $panelList = $this->panelList;
-        $id        = $panel->getId();
+        $id = $panel->getId();
 
         /** @var PostFieldPanelInterface $panel */
         $postTypes = $panel->getScreens();
@@ -40,7 +41,7 @@ class PanelManager
             }
         }
 
-        $panelList[$id]  = $panel;
+        $panelList[$id] = $panel;
         $this->panelList = $panelList;
 
         return $this;
@@ -59,8 +60,8 @@ class PanelManager
     /**
      * Affiche le contenu du panneau dans le panneau
      *
-     * @param \WP_Post $post    , le post en cours
-     * @param array    $context , toutes les données utiles
+     * @param \WP_Post $post , le post en cours
+     * @param array $context , toutes les données utiles
      *
      * @since 08/07/2011
      *
@@ -70,7 +71,7 @@ class PanelManager
         $container = Container::getInstance();
 
         $panelid = str_replace('_custombox', '', $context['id']);
-        $panel   = $this->getPanel($panelid);
+        $panel = $this->getPanel($panelid);
 
         if ($panel instanceof PostFieldPanelInterface) {
             $fields = $panel->getFields();
@@ -85,7 +86,7 @@ class PanelManager
                     $fname = $f->getName();
 
                     $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
-                    if(empty($value)){
+                    if (empty($value)) {
                         $value = get_post_meta($post->ID, $fname, true);
                     }
                     $panel->formatFromDb($value);
@@ -99,7 +100,7 @@ class PanelManager
                     'formStart' => [
                         'showFormTag' => 0,
                     ],
-                    'formEnd'   => [
+                    'formEnd' => [
                         'showSubmit' => 0,
                     ],
                 ];
@@ -116,8 +117,9 @@ class PanelManager
     public function savePanels()
     {
         //Verifs de securite
-        $request  = Request::getInstance();
-        $post_id  = $request->get('post_ID', 0);
+        $request = Request::getInstance();
+        $sanitizer = Sanitizer::getInstance();
+        $post_id = $request->get('post_ID', 0);
         $postType = $request->request->get('post_type');
 
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -132,6 +134,9 @@ class PanelManager
         // OK, we're authenticated: we need to find and save the data
         $panelList = $this->panelList;
         if (!empty($panelList)) {
+
+            $requestData = $sanitizer->sanitize($request->request->all());
+
             foreach ($panelList as $panel) {
                 /** @var PostFieldPanelInterface $panel */
 
@@ -141,7 +146,7 @@ class PanelManager
                 }
 
                 $metakey = $panel->getId();
-                $metaval = [];
+                $composedValues = [];
 
                 $fields = $panel->getFields();
                 if (!empty($fields)) {
@@ -150,14 +155,52 @@ class PanelManager
                         if (!empty($f->getName())) {
                             $key = $f->getName();
                             delete_post_meta($post_id, $key);
-
-                            if (!empty($request->request->get($key))) {
-                                $val = $panel->formatToDb($request->request->get($key));
-
-                                $metaval[$key] = $val;
+                            $val = null;
+                            if (!empty($requestData[$key])) {
+                                $val = $panel->formatToDb($requestData[$key]);
+                            }
+                            if (empty($val)) {
+                                //check with the field display rules name
+                                $displayRules = $f->getDisplayRules();
+                                if (!empty($displayRules) && is_array($displayRules) && !empty($displayRules['inputAttributes']) && !empty($displayRules['inputAttributes']['name'])) {
+                                    // $dlName looks like this : string(20) "hreflangpanel[en_IE]"
+                                    $dlName = $displayRules['inputAttributes']['name'];
+                                    //we need to transform this string to an array path to be able to check the value in the request data based on this path
+                                    $dlName = str_replace(['[', ']'], ['/', ''], $dlName);
+                                    $dlName = explode('/', $dlName);
+                                    if (count($dlName) > 1) {
+                                        //This is a composed array
+                                        $composedIndex = reset($dlName);
+                                        $composedValues[$composedIndex] = $requestData[$composedIndex];
+                                        //now we can check the value in the request data
+                                        $current = $requestData;
+                                        foreach ($dlName as $dl) {
+                                            if (isset($current[$dl])) {
+                                                $current = $current[$dl];
+                                            } else {
+                                                $current = null;
+                                                break;
+                                            }
+                                        }
+                                        if ($current !== null) {
+                                            $val = $panel->formatToDb($current);
+                                        }
+                                    } else {
+                                        $val = $panel->formatToDb($requestData[$key]);
+                                    }
+                                }
+                            }
+                            if (!empty($val)) {
                                 //On MaJ la valeur individuelle, utile pour faire des query avec get_posts en utilisant les champs meta_key et meta_value.
                                 add_post_meta($post_id, $key, $val);
                             }
+                        }
+                    }
+                    if(!empty($composedValues)){
+                        foreach($composedValues as $composedKey => $composedValue){
+                            $composedValue = $panel->formatToDb($composedValue);
+                            delete_post_meta($post_id, $composedKey);
+                            add_post_meta($post_id, $composedKey, $composedValue);
                         }
                     }
                 }
