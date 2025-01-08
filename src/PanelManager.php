@@ -77,7 +77,7 @@ class PanelManager
             $fields = $panel->getFields();
             if (!empty($fields)) {
                 //On recupere les parametres et leur données sauvegardées
-                $savedData = $panel->formatFromDb(get_post_meta($post->ID, $panelid, true));
+                $savedData = $panel::formatFromDb(get_post_meta($post->ID, $panelid, true));
 
                 /** @var Form $form */
                 $form = $container->offsetGet('wwp.form.form');
@@ -89,7 +89,7 @@ class PanelManager
                     if (empty($value)) {
                         $value = get_post_meta($post->ID, $fname, true);
                     }
-                    $panel->formatFromDb($value);
+                    $panel::formatFromDb($value);
                     if ($value !== null) {
                         $f->setValue($value);
                     }
@@ -157,7 +157,7 @@ class PanelManager
                             delete_post_meta($post_id, $key);
                             $val = null;
                             if (!empty($requestData[$key])) {
-                                $val = $panel->formatToDb($requestData[$key]);
+                                $val = $panel::formatToDb($requestData[$key]);
                             }
                             if (empty($val)) {
                                 //check with the field display rules name
@@ -183,10 +183,10 @@ class PanelManager
                                             }
                                         }
                                         if ($current !== null) {
-                                            $val = $panel->formatToDb($current);
+                                            $val = $panel::formatToDb($current);
                                         }
                                     } else {
-                                        $val = $panel->formatToDb($requestData[$key]);
+                                        $val = $panel::formatToDb($requestData[$key]);
                                     }
                                 }
                             }
@@ -198,7 +198,7 @@ class PanelManager
                     }
                     if(!empty($composedValues)){
                         foreach($composedValues as $composedKey => $composedValue){
-                            $composedValue = $panel->formatToDb($composedValue);
+                            $composedValue = $panel::formatToDb($composedValue);
                             delete_post_meta($post_id, $composedKey);
                             add_post_meta($post_id, $composedKey, $composedValue);
                         }

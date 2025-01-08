@@ -39,10 +39,10 @@ class PostFieldPanel extends Metabox
         return $this->setScreens($postTypes);
     }
 
-    public function formatToDb($value)
+    public static function formatToDb($value)
     {
         if (is_array($value) || is_object($value)) {
-            $value = serialize($value);
+            $value = json_encode($value);
         }
         if (is_string($value)) {
             $value = stripslashes($value);
@@ -51,14 +51,30 @@ class PostFieldPanel extends Metabox
         return $value;
     }
 
-    public function formatFromDb($value)
+    public static function formatFromDb($value)
     {
         if ($value == 'on') {
             $value = 1;
         } elseif (is_serialized($value)) {
             $value = unserialize($value);
+        } elseif (is_string($value) && self::isJson($value)) {
+            $value = json_decode($value, true);
         }
 
         return $value;
+    }
+
+    public static function isJson( $argument, $ignore_scalars = true ) {
+        if ( ! is_string( $argument ) || '' === $argument ) {
+            return false;
+        }
+
+        if ( $ignore_scalars && ! in_array( $argument[0], [ '{', '[' ], true ) ) {
+            return false;
+        }
+
+        json_decode( $argument, $assoc = true );
+
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }

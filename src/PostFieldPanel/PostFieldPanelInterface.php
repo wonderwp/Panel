@@ -36,12 +36,12 @@ interface PostFieldPanelInterface extends MetaboxInterface
      *
      * @return mixed
      */
-    public function formatToDb($value);
+    public static function formatToDb($value);
 
     /**
      * @param mixed $value
      *
      * @return mixed
      */
-    public function formatFromDb($value);
+    public static function formatFromDb($value);
 }
