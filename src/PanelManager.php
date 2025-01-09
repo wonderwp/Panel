@@ -171,6 +171,10 @@ class PanelManager
                                     if (count($dlName) > 1) {
                                         //This is a composed array
                                         $composedIndex = reset($dlName);
+                                        if(!isset($composedValues[$composedIndex])){
+                                            // There is no value for this composed index yet, no need to check the value in the request data
+                                            continue;
+                                        }
                                         $composedValues[$composedIndex] = $requestData[$composedIndex];
                                         //now we can check the value in the request data
                                         $current = $requestData;
@@ -185,7 +189,7 @@ class PanelManager
                                         if ($current !== null) {
                                             $val = $panel::formatToDb($current);
                                         }
-                                    } else {
+                                    } elseif(!empty($requestData[$key])){
                                         $val = $panel::formatToDb($requestData[$key]);
                                     }
                                 }
