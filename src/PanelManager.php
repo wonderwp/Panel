@@ -86,6 +86,10 @@ class PanelManager
                     $fname = $f->getName();
 
                     $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
+                    if(empty($value)){
+                        $shortfname = str_replace($panelid, '', $fname);
+                        $value = !empty($savedData[$shortfname]) ? $savedData[$shortfname] : null;
+                    }
                     if (empty($value)) {
                         $value = get_post_meta($post->ID, $fname, true);
                     }
@@ -168,10 +172,11 @@ class PanelManager
                                     //we need to transform this string to an array path to be able to check the value in the request data based on this path
                                     $dlName = str_replace(['[', ']'], ['/', ''], $dlName);
                                     $dlName = explode('/', $dlName);
+
                                     if (count($dlName) > 1) {
                                         //This is a composed array
                                         $composedIndex = reset($dlName);
-                                        if(!isset($composedValues[$composedIndex])){
+                                        if(!isset($requestData[$composedIndex])){
                                             // There is no value for this composed index yet, no need to check the value in the request data
                                             continue;
                                         }
