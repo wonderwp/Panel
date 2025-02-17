@@ -58,6 +58,9 @@ class PostFieldPanel extends Metabox
         } elseif (is_serialized($value)) {
             $value = unserialize($value);
         } elseif (is_string($value) && self::isJson($value)) {
+            //Fix unicode escaping
+            $value = preg_replace('/u([0-9a-fA-F]{4})/', '\\u\1', $value);
+            //Then json decode
             $value = json_decode($value, true);
         }
 
