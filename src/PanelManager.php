@@ -84,15 +84,24 @@ class PanelManager
                 foreach ($fields as $f) {
                     /** @var AbstractField $f */
                     $fname = $f->getName();
+                    $value = $f->getValue();
 
-                    $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
+                    //Check if the value is already set on the field, if not, we try to get it from the savedData from its name
+                    if(empty($value)) {
+                        $value = !empty($savedData[$fname]) ? $savedData[$fname] : null;
+                    }
+
+                    //Check if the value is set in $savedData with the panelid removed
                     if(empty($value)){
                         $shortfname = str_replace($panelid, '', $fname);
                         $value = !empty($savedData[$shortfname]) ? $savedData[$shortfname] : null;
                     }
+
+                    //Check if the value is set in a post meta
                     if (empty($value)) {
                         $value = get_post_meta($post->ID, $fname, true);
                     }
+
                     $panel::formatFromDb($value);
                     if ($value !== null) {
                         $f->setValue($value);
