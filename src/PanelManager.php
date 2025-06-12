@@ -102,7 +102,8 @@ class PanelManager
                         $value = get_post_meta($post->ID, $fname, true);
                     }
 
-                    $panel::formatFromDb($value);
+                    $value = $panel::formatFromDb($value);
+
                     if ($value !== null) {
                         $f->setValue($value);
                     }
